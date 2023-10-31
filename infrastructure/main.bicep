@@ -102,7 +102,7 @@ resource acrRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' 
 }]
 
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
-  name: '${name}-keyvault'
+  name: '${name}-kv'
   location: location
   properties: {
     sku: {
