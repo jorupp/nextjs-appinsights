@@ -7,6 +7,7 @@ param location string = resourceGroup().location
 param name string = 'nextjs-appinsights'
 @minLength(5)
 param simpleName string = replace(name, '-', '')
+param openAiLocation string
 
 param apps array = ['inst', 'manual']
 
@@ -195,7 +196,7 @@ resource search 'Microsoft.Search/searchServices@2022-09-01' = {
 // openai services
 resource openAi 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   name: '${name}-openai'
-  location: location
+  location: openAiLocation
   kind: 'OpenAI'
   sku: {
     name: 'S0'
@@ -210,7 +211,7 @@ resource openAi 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
 }
 resource openAiGpt4Instance 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   name: '${name}-openai-gpt4'
-  location: location
+  location: openAiLocation
   kind: 'OpenAI'
   sku: {
     name: 'S0'

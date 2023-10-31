@@ -42,3 +42,4 @@ jobs:
           template: infrastructure/main.bicep
           failOnStdErr: false
           scope: 'resourcegroup'
+          parameters: location=${{ vars.AZURE_LOCATION }} openAiLocation=${{ vars.AZURE_OPEN_AI_LOCATION }}
