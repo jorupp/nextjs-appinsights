@@ -11,6 +11,7 @@ import {
 // import { trackTrace } from '@/features/logging/unified';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
+import { trackTrace } from '@/components/app-insights/unified';
 
 // only show a few characters of the message initially so we can the full overview on the screen to start with
 const initialContentLimit = 50;
@@ -98,26 +99,23 @@ export const RenderDiagnostics = ({
 
 const runDiagnostics = async (): Promise<DiagnosticResult[]> => {
     return Promise.all([
-        // applicationInsights(),
-        dummy(),
+        applicationInsights(),
     ]);
 };
 
-const dummy = async() => runTest('Dummy', async() => {}, () => 'Dummy complete');
-
-// const applicationInsights = async () =>
-//     runTest(
-//         'Application Insights (client)',
-//         async () => {
-//             if (
-//                 !trackTrace({ message: 'diagnostics test message from client' })
-//             )
-//                 throw new Error(
-//                     'Application Insights is not enabled - check that connection string is correct',
-//                 );
-//         },
-//         () => `Sent trace message to Application Insights from client`,
-//     );
+const applicationInsights = async () =>
+    runTest(
+        'Application Insights (client)',
+        async () => {
+            if (
+                !trackTrace({ message: 'diagnostics test message from client' })
+            )
+                throw new Error(
+                    'Application Insights is not enabled - check that connection string is correct',
+                );
+        },
+        () => `Sent trace message to Application Insights from client`,
+    );
 
 /**
  * Helpers to build diagnostic results
