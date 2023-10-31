@@ -209,64 +209,39 @@ resource openAi 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
     }
   }
 }
-resource openAiGpt4Instance 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-  name: '${name}-openai-gpt4'
-  location: openAiLocation
-  kind: 'OpenAI'
-  sku: {
-    name: 'S0'
-  }
-  properties: {
-    customSubDomainName: '${name}-openai-gpt4'
-    publicNetworkAccess: 'Enabled'
-    networkAcls: {
-      defaultAction: 'Allow'
-    }
-  }
-}
 
-// TODO: figure out why all calls to create/update these model deployments fails saying there's an existing operation in progress
-resource openAiGpt35 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
+
+var models = [
+  {
+    name: 'gpt-35-turbo'
+    version: '0613'
+    capacity: 20
+
+  }
+  {
+    name: 'text-embedding-ada-002'
+    version: '2'
+    capacity: 20
+  }
+]
+
+// use batchSize and an input array to create resources one at a time - https://github.com/Azure/bicep-types-az/issues/1730
+@batchSize(1)
+resource modelResources 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [for model in models: {
   parent: openAi
-  name: 'gpt-35-turbo'
+  name: model.name
   properties: {
     model: {
       format: 'OpenAI'
-      name: 'gpt-35-turbo'
-      version: '0613'
+      name: model.name
+      version: model.version
     }
   }
   sku: {
     name: 'Standard'
-    capacity: 20
+    capacity: model.capacity
   }
-}
-resource openAiGpt4 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
-  parent: openAiGpt4Instance
-  name: 'gpt-4'
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: 'gpt-4'
-      version: '0613'
-    }
-  }
-  sku: {
-    name: 'Standard'
-    capacity: 20
-  }
-}
-resource openAiEmbedding 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
-  parent: openAi
-  name: 'text-embedding-ada-002'
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: 'text-embedding-ada-002'
-      version: '2'
-    }
-  }
-}
+}]
 
 // store secrets in keyvault
 resource secretStorageKey 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
@@ -304,13 +279,6 @@ resource secretOpenAiKey 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
     value: openAi.listKeys().key1
   }
 }
-resource gpt4ApiKeySecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
-  parent: keyVault
-  name: 'AZURE-OPENAI-GPT4-API-KEY'
-  properties: {
-    value: openAiGpt4Instance.listKeys().key1
-  }
-}
 
 // web app settings
 resource webAppSettings 'Microsoft.Web/sites/config@2021-02-01' = [for (app, i) in apps: {
@@ -324,14 +292,10 @@ resource webAppSettings 'Microsoft.Web/sites/config@2021-02-01' = [for (app, i) 
       { name: 'STORAGE_ACCOUNT_KEY', value: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=STORAGE-ACCOUNT-KEY)' }
       { name: 'AZURE_DOCUMENT_INTELLIGENCE_KEY', value: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=AZURE-DOCUMENT-INTELLIGENCE-KEY)' }
       { name: 'AZURE_DOCUMENT_TRANSLATOR_KEY', value: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=AZURE-DOCUMENT-TRANSLATOR-KEY)' }
-      { name: 'AZURE_OPENAI_GPT4_API_KEY', value: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=AZURE-OPENAI-GPT4-API-KEY)' }
       { name: 'AZURE_OPENAI_API_INSTANCE_NAME', value: openAi.name }
-      { name: 'AZURE_OPENAI_API_EMBEDDINGS_DEPLOYMENT_NAME', value: openAiEmbedding.name }
       { name: 'AZURE_OPENAI_API_VERSION', value: '2023-03-15-preview' }
-      { name: 'AZURE_OPENAI_GPT35_API_DEPLOYMENT_NAME', value: openAiGpt35.name }
-      { name: 'AZURE_OPENAI_GPT4_API_INSTANCE_NAME', value: openAiGpt4Instance.name }
-      { name: 'AZURE_OPENAI_GPT4_API_DEPLOYMENT_NAME', value: openAiGpt4.name }
-      { name: 'ADMIN_ROLE_NAME', value: 'Admin' }
+      { name: 'AZURE_OPENAI_API_EMBEDDINGS_DEPLOYMENT_NAME', value: models[1].name }
+      { name: 'AZURE_OPENAI_GPT35_API_DEPLOYMENT_NAME', value: models[0].name }
       { name: 'AZURE_SEARCH_NAME', value: search.name }
       { name: 'STORAGE_ACCOUNT_NAME', value: storage.name }
       { name: 'AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT', value: docIntel.properties.endpoint }
