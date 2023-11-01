@@ -5,7 +5,6 @@ import {
 } from './shared';
 import { StringifyFile } from './doc-intel';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
-// import { trackTrace } from '@/features/logging/unified';
 import { lookup } from 'node:dns/promises';
 
 import {
@@ -19,6 +18,7 @@ import { QueueClient } from '@azure/storage-queue';
 import { getSupportedDocumentFormats } from './translator';
 import { findRelevantDocuments } from './vector-search';
 import { getChatCompletions } from './chat-completion';
+import { trackDependencyCall, trackTrace } from '@/components/app-insights/unified';
 
 export const runDiagnostics = async (
 ): Promise<DiagnosticResult[]> => {
@@ -31,7 +31,7 @@ export const runDiagnostics = async (
         cognitiveSearch(),
         documentIntelligence(),
         documentTranslationSupportedFormats(),
-        // applicationInsights(),
+        applicationInsights(),
         applicationInsightsDirect(),
         jobQueue(),
     ]);
@@ -139,19 +139,19 @@ const documentIntelligence = async () =>
             `Found ${paragraphs?.length} paragraph(s) and ${pages?.length} page(s)`,
     );
 
-// const applicationInsights = async () =>
-//     runTest(
-//         'Application Insights (server)',
-//         async () => {
-//             if (
-//                 !trackTrace({ message: 'diagnostics test message from server' })
-//             )
-//                 throw new Error(
-//                     'Application Insights is not enabled - check that connection string is correct',
-//                 );
-//         },
-//         () => `Sent trace message to Application Insights from server`,
-//     );
+const applicationInsights = async () =>
+    runTest(
+        'Application Insights (server)',
+        async () => {
+            if (
+                !trackTrace({ message: 'diagnostics test message from server' })
+            )
+                throw new Error(
+                    'Application Insights is not enabled - check that connection string is correct',
+                );
+        },
+        () => `Sent trace message to Application Insights from server`,
+    );
 
 const applicationInsightsDirect = async () =>
     runTest(
@@ -270,7 +270,13 @@ async function runTest<T>(
     buildResult: (data: T) => string,
 ): Promise<DiagnosticResult> {
     try {
-        const data = await getData();
+        const data = await await trackDependencyCall(
+            'DIAG',
+            name,
+            name,
+            name,
+            getData,
+        );
         return success(name, buildResult(data));
     } catch (e: any) {
         return failure(name, e);

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-     - feature/appinsights-instrumentation
+     - feature/appinsights-manual
     paths-ignore:
      - .github/workflows/infrastructure.yml
      - infrastructure/**
@@ -12,7 +12,7 @@ on:
 env:
   BUILD_REGISTRY: ghcr.io
   DEPLOY_REGISTRY: nextjsappinsightsreg.azurecr.io
-  DEPLOY_APPNAME: nextjs-appinsights-inst
+  DEPLOY_APPNAME: nextjs-appinsights-manual
   # set this to a value to override the automatic setting of the image tag to the first 7 characters of the commit hash
   #   this should only be used when debugging the deploy part of this script and not waiting to wait for the build every time
   # IMAGE_TAG: 5c9b839

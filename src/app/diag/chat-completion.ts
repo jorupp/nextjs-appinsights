@@ -5,7 +5,7 @@ import {
     OpenAIClient,
 } from '@azure/openai';
 
-import { trackDependencyCall } from './app-insights';
+import { trackDependencyCall } from '@/components/app-insights/unified';
 
 export interface ChatMessageModel {
     id: string;

@@ -2,7 +2,7 @@ import {
     ApplicationInsights,
     SeverityLevel,
 } from '@microsoft/applicationinsights-web';
-import type { TelemetryClient } from 'applicationinsights';
+import type { TelemetryClient, wrapWithCorrelationContext } from 'applicationinsights';
 import { nanoid } from 'nanoid';
 
 export type { SeverityLevel } from '@microsoft/applicationinsights-web';
@@ -27,6 +27,9 @@ const getBrowserClient = () =>
     )?.appInsights;
 const getServerClient = () =>
     (global as any).__APP_INSIGHTS_CLIENT__ as TelemetryClient | undefined;
+const getServerWrapWithCorrelationContext = () =>
+    (global as any).__APP_INSIGHTS_WRAP_WITH_CORRELATION_CONTEXT__ as typeof wrapWithCorrelationContext | undefined;
+
 
 export interface ExceptionTelemetry {
     exception: Error;
@@ -142,32 +145,40 @@ export const trackDependencyCall = async <T>(
     props?: Record<string, unknown>,
     getExtraProps?: (result: T) => Record<string, unknown>,
 ): Promise<T> => {
-    const start = Date.now();
-    let success = false;
-    const finalProps: Record<string, unknown> = {};
-    if (props) {
-        Object.assign(finalProps, props);
+    async function trackCall() {
+        const start = Date.now();
+        let success = false;
+        const finalProps: Record<string, unknown> = {};
+        if (props) {
+            Object.assign(finalProps, props);
+        }
+        try {
+            const retVal = await call();
+            if (retVal && Array.isArray(retVal)) {
+                finalProps.resultCount = retVal.length;
+            }
+            if (getExtraProps) {
+                Object.assign(finalProps, getExtraProps(retVal) || {});
+            }
+            success = true;
+            return retVal;
+        } finally {
+            trackDependency({
+                dependencyTypeName,
+                name,
+                target,
+                data,
+                resultCode: success ? 200 : 500,
+                success,
+                duration: Date.now() - start,
+                properties: finalProps,
+            });
+        }
     }
-    try {
-        const retVal = await call();
-        if (retVal && Array.isArray(retVal)) {
-            finalProps.resultCount = retVal.length;
-        }
-        if (getExtraProps) {
-            Object.assign(finalProps, getExtraProps(retVal) || {});
-        }
-        success = true;
-        return retVal;
-    } finally {
-        trackDependency({
-            dependencyTypeName,
-            name,
-            target,
-            data,
-            resultCode: success ? 200 : 500,
-            success,
-            duration: Date.now() - start,
-            properties: finalProps,
-        });
+    const wrap = getServerWrapWithCorrelationContext();
+    if (wrap) {
+        return await wrap(trackCall)();
+    } else {
+        return await trackCall();
     }
 };

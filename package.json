@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node local-dev-server.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -22,6 +22,7 @@
     "applicationinsights": "^2.9.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "encoding": "^0.1.13",
     "langchain": "^0.0.176",
     "next": "^13.5.6",
     "react": "^18",
