@@ -17,7 +17,7 @@ try {
         .setDistributedTracingMode(appInsights.DistributedTracingModes.AI);
 
     appInsights.start();
-    if (true) {
+    if (false) {
         // set to true to write server-side telemetry info to console
         appInsights.defaultClient.addTelemetryProcessor((e, ctx) => {
             const baseType = e?.data?.baseType;
