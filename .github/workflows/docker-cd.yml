@@ -75,10 +75,8 @@ jobs:
         run: echo "IMAGE=${GITHUB_REPOSITORY,,}:$(echo $GITHUB_SHA | cut -c -7)" >> ${GITHUB_OUTPUT}
         id: image
 
-      # use DocQaA working directory
       - name: 'Build image'
         run: docker build --no-cache --file Dockerfile . -t ${{ env.BUILD_REGISTRY }}/${{needs.identify-image.outputs.image}} --build-arg BUILD_ID=${GITHUB_SHA}
-        working-directory: DocQaA
         
       - name: 'Dump startup.js'
         run: docker run --rm ${{ env.BUILD_REGISTRY }}/${{needs.identify-image.outputs.image}} /bin/cat server.js
