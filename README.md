@@ -16,21 +16,27 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Application Insights
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+There are two branches within this repository - one that tries to use NextJS instrumentation to initialize Application Insights, and one that uses the standard JavaScript SDK into the server.js file.
 
-## Learn More
+- [NextJS Instrumentation](https://github.com/jorupp/nextjs-appinsights/tree/feature/appinsights-instrumentation) - does not work (build error message in `README.md`)
+- [JavaScript SDK](https://github.com/jorupp/nextjs-appinsights/tree/feature/appinsights-manual) - works
 
-To learn more about Next.js, take a look at the following resources:
+Tracked dependencies for the manual approach:
+![Tracked dependencies](diag-request-manual.png)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Calls this page makes and whether they were tracked
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- [x] main request
+- [x] create blob container
+- [x] create queue
+- [ ] create table
+- [ ] fetch items from storage table
+- [x] peek into storage queue
+- [ ] fetch document list from storage blob
+- [x] OpenAI embeddings
+- [ ] OpenAI chat completion
+- [x] Search cognitive search index
+- [ ] Form analyzer - analyze a document
+- [x] Document translation supported formats
