@@ -15,3 +15,7 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Application insights
+
+Application insights works with the code on this branch, both client and server-side, though some of the server-side dependencies aren't tracked or linked up properly.
