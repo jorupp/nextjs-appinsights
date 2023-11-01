@@ -16,21 +16,132 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Application Insights issues
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+This branch tries to use [NextJS instrumentation](https://nextjs.org/docs/pages/building-your-application/optimizing/instrumentation), but it fails during `npm run dev` with the following errors.  It appears to be due to the way some of the dependencies are referenced conflicting with the way NextJS tries to import them.
 
-## Learn More
+```txt
+Module not found: Can't resolve '@azure/functions-core' in '<projectdir>\node_modules\applicationinsights\out\AutoCollection'
 
-To learn more about Next.js, take a look at the following resources:
+Import trace for requested module:
+./node_modules/applicationinsights/out/AutoCollection/AzureFunctionsHook.js
+./node_modules/applicationinsights/out/applicationinsights.js
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+./node_modules/applicationinsights/out/AutoCollection/NativePerformance.js
+Module not found: Can't resolve 'applicationinsights-native-metrics' in '<projectdir>\node_modules\applicationinsights\out\AutoCollection'
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+Import trace for requested module:
+./node_modules/applicationinsights/out/AutoCollection/NativePerformance.js
+./node_modules/applicationinsights/out/applicationinsights.js
 
-## Deploy on Vercel
+./node_modules/async-listener/index.js
+Module not found: Can't resolve 'zlib' in '<projectdir>\node_modules\async-listener'
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Import trace for requested module:
+./node_modules/async-listener/index.js
+./node_modules/continuation-local-storage/context.js
+./node_modules/applicationinsights/out/AutoCollection/CorrelationContextManager.js
+./node_modules/applicationinsights/out/applicationinsights.js
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+./node_modules/async-listener/index.js
+Module not found: Can't resolve 'crypto' in '<projectdir>\node_modules\async-listener'
+
+Import trace for requested module:
+./node_modules/async-listener/index.js
+./node_modules/continuation-local-storage/context.js
+./node_modules/applicationinsights/out/AutoCollection/CorrelationContextManager.js
+./node_modules/applicationinsights/out/applicationinsights.js
+ ⚠ ./node_modules/applicationinsights/out/AutoCollection/AzureFunctionsHook.js
+Module not found: Can't resolve '@azure/functions-core' in '<projectdir>\node_modules\applicationinsights\out\AutoCollection'
+
+Import trace for requested module:
+./node_modules/applicationinsights/out/AutoCollection/AzureFunctionsHook.js
+./node_modules/applicationinsights/out/applicationinsights.js
+
+./node_modules/applicationinsights/out/AutoCollection/NativePerformance.js
+Module not found: Can't resolve 'applicationinsights-native-metrics' in '<projectdir>\node_modules\applicationinsights\out\AutoCollection'
+
+Import trace for requested module:
+./node_modules/applicationinsights/out/AutoCollection/NativePerformance.js
+./node_modules/applicationinsights/out/applicationinsights.js
+
+./node_modules/async-listener/index.js
+Module not found: Can't resolve 'zlib' in '<projectdir>\node_modules\async-listener'
+
+Import trace for requested module:
+./node_modules/async-listener/index.js
+./node_modules/continuation-local-storage/context.js
+./node_modules/applicationinsights/out/AutoCollection/CorrelationContextManager.js
+./node_modules/applicationinsights/out/applicationinsights.js
+
+./node_modules/async-listener/index.js
+Module not found: Can't resolve 'crypto' in '<projectdir>\node_modules\async-listener'
+
+Import trace for requested module:
+./node_modules/async-listener/index.js
+./node_modules/continuation-local-storage/context.js
+./node_modules/applicationinsights/out/AutoCollection/CorrelationContextManager.js
+./node_modules/applicationinsights/out/applicationinsights.js
+ ⚠ ./node_modules/applicationinsights/out/AutoCollection/AzureFunctionsHook.js
+Module not found: Can't resolve '@azure/functions-core' in '<projectdir>\node_modules\applicationinsights\out\AutoCollection'
+
+Import trace for requested module:
+./node_modules/applicationinsights/out/AutoCollection/AzureFunctionsHook.js
+./node_modules/applicationinsights/out/applicationinsights.js
+
+./node_modules/applicationinsights/out/AutoCollection/NativePerformance.js
+Module not found: Can't resolve 'applicationinsights-native-metrics' in '<projectdir>\node_modules\applicationinsights\out\AutoCollection'
+
+Import trace for requested module:
+./node_modules/applicationinsights/out/AutoCollection/NativePerformance.js
+./node_modules/applicationinsights/out/applicationinsights.js
+
+./node_modules/async-listener/index.js
+Module not found: Can't resolve 'zlib' in '<projectdir>\node_modules\async-listener'
+
+Import trace for requested module:
+./node_modules/async-listener/index.js
+./node_modules/continuation-local-storage/context.js
+./node_modules/applicationinsights/out/AutoCollection/CorrelationContextManager.js
+./node_modules/applicationinsights/out/applicationinsights.js
+
+./node_modules/async-listener/index.js
+Module not found: Can't resolve 'crypto' in '<projectdir>\node_modules\async-listener'
+
+Import trace for requested module:
+./node_modules/async-listener/index.js
+./node_modules/continuation-local-storage/context.js
+./node_modules/applicationinsights/out/AutoCollection/CorrelationContextManager.js
+./node_modules/applicationinsights/out/applicationinsights.js
+ ⚠ ./node_modules/applicationinsights/out/AutoCollection/AzureFunctionsHook.js
+Module not found: Can't resolve '@azure/functions-core' in '<projectdir>\node_modules\applicationinsights\out\AutoCollection'
+
+Import trace for requested module:
+./node_modules/applicationinsights/out/AutoCollection/AzureFunctionsHook.js
+./node_modules/applicationinsights/out/applicationinsights.js
+
+./node_modules/applicationinsights/out/AutoCollection/NativePerformance.js
+Module not found: Can't resolve 'applicationinsights-native-metrics' in '<projectdir>\node_modules\applicationinsights\out\AutoCollection'
+
+Import trace for requested module:
+./node_modules/applicationinsights/out/AutoCollection/NativePerformance.js
+./node_modules/applicationinsights/out/applicationinsights.js
+
+./node_modules/async-listener/index.js
+Module not found: Can't resolve 'zlib' in '<projectdir>\node_modules\async-listener'
+
+Import trace for requested module:
+./node_modules/async-listener/index.js
+./node_modules/continuation-local-storage/context.js
+./node_modules/applicationinsights/out/AutoCollection/CorrelationContextManager.js
+./node_modules/applicationinsights/out/applicationinsights.js
+
+./node_modules/async-listener/index.js
+Module not found: Can't resolve 'crypto' in '<projectdir>\node_modules\async-listener'
+
+Import trace for requested module:
+./node_modules/async-listener/index.js
+./node_modules/continuation-local-storage/context.js
+./node_modules/applicationinsights/out/AutoCollection/CorrelationContextManager.js
+./node_modules/applicationinsights/out/applicationinsights.js
+```

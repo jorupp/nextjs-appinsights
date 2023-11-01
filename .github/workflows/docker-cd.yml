@@ -1,0 +1,126 @@
+name: Deploy app
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+     - feature/appinsights-instrumentation
+    paths-ignore:
+     - .github/workflows/infrastructure.yml
+     - infrastructure/**
+
+env:
+  BUILD_REGISTRY: ghcr.io
+  DEPLOY_REGISTRY: nextjsappinsightsreg.azurecr.io
+  DEPLOY_APPNAME: nextjs-appinsights-inst
+  # set this to a value to override the automatic setting of the image tag to the first 7 characters of the commit hash
+  #   this should only be used when debugging the deploy part of this script and not waiting to wait for the build every time
+  # IMAGE_TAG: 5c9b839
+# Using OpenID Connect - https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Cwindows#use-the-azure-login-action-with-openid-connect
+# If you get a "No subscriptions found for ..." error, you forgot to grant the service pricipal any permissions
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+defaults:
+  run:
+    shell: bash
+jobs:
+  identify-image:
+    name: 'Identify image'
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{steps.image.outputs.IMAGE}}
+      image-exists: ${{steps.check.outputs.EXITCODE == 0}}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Identify image to use/build
+        run: echo "IMAGE=${GITHUB_REPOSITORY,,}:${IMAGE_TAG:-$(echo $GITHUB_SHA | cut -c -7)}" >> ${GITHUB_OUTPUT}
+        id: image
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.BUILD_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # check if image exists in BUILD_REGISTRY - TODO: is there a way to _check_ without _pull_ing?
+      #   `set +e` disable auto-exit-on-failure - https://github.com/orgs/community/discussions/46992
+      - name: 'Check if image exists in ACR'
+        id: check
+        run: |
+          set +e
+          docker pull ${{ env.BUILD_REGISTRY }}/${{steps.image.outputs.IMAGE}}
+          echo "EXITCODE=$?" >> $GITHUB_OUTPUT
+
+  # if the image doesn't exist in BUILD_REGISTRY, build it
+  build:
+    if: ${{ needs.identify-image.outputs.image-exists == 'false' }}
+    needs: identify-image
+    name: 'Build in Docker'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.BUILD_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get Image
+        run: echo "IMAGE=${GITHUB_REPOSITORY,,}:$(echo $GITHUB_SHA | cut -c -7)" >> ${GITHUB_OUTPUT}
+        id: image
+
+      # use DocQaA working directory
+      - name: 'Build image'
+        run: docker build --no-cache --file Dockerfile . -t ${{ env.BUILD_REGISTRY }}/${{needs.identify-image.outputs.image}} --build-arg BUILD_ID=${GITHUB_SHA}
+        working-directory: DocQaA
+        
+      - name: 'Dump startup.js'
+        run: docker run --rm ${{ env.BUILD_REGISTRY }}/${{needs.identify-image.outputs.image}} /bin/cat server.js
+      - name: 'List node_modules'
+        run: docker run --rm ${{ env.BUILD_REGISTRY }}/${{needs.identify-image.outputs.image}} /bin/ls node_modules
+      - name: 'Push image'
+        run: docker push ${{ env.BUILD_REGISTRY }}/${{needs.identify-image.outputs.image}}
+
+  # deploy the image from BUILD_REGISTRY, regardless of whether it existed at the start or we just built it
+  deploy:
+    name: 'Deploy to Azure'
+    needs: [identify-image, build]
+    if: |
+      always() &&
+      needs.identify-image.result == 'success' && 
+      (needs.build.result == 'success' || needs.build.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: OIDC Login to Azure Public Cloud
+        uses: azure/login@v1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: 'Import image to ACR'
+        run: |
+          az acr import --name ${{ env.DEPLOY_REGISTRY }} \
+          --source ${{ env.BUILD_REGISTRY }}/${{ needs.identify-image.outputs.image }} \
+          --image ${{ needs.identify-image.outputs.image }} \
+          --username ${{ github.actor }} \
+          --password ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Deploy app'
+        uses: Azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.DEPLOY_APPNAME }}
+          images: ${{ env.DEPLOY_REGISTRY }}/${{ needs.identify-image.outputs.image }}
+      
+      - name: 'Restart app'
+        run: az webapp restart --name ${{ env.DEPLOY_APPNAME }} --resource-group ${{ vars.AZURE_RESOURCE_GROUP }}
