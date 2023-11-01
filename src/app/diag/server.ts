@@ -270,15 +270,21 @@ async function runTest<T>(
     buildResult: (data: T) => string,
 ): Promise<DiagnosticResult> {
     try {
-        const data = await await trackDependencyCall(
-            'DIAG',
-            name,
-            name,
-            name,
-            getData,
-        );
+        const data = await getData();
         return success(name, buildResult(data));
     } catch (e: any) {
         return failure(name, e);
     }
+    // try {
+    //     const data = await trackDependencyCall(
+    //         'DIAG',
+    //         name,
+    //         name,
+    //         name,
+    //         getData,
+    //     );
+    //     return success(name, buildResult(data));
+    // } catch (e: any) {
+    //     return failure(name, e);
+    // }
 }
